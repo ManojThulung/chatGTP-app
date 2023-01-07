@@ -47,7 +47,7 @@ function chatStrip(isAi, value, uniqueId) {
     <div class="wrapper ${isAi && "ai"}">
       <div class="chat">
         <div class='profile'>
-          <img src='${isAi ? bot : user}' alt='${isAi ? "bot" : "user"} />
+          <img src=${isAi ? bot : user} alt=${isAi ? "bot" : "user"} />
         </div>
         <div class='message' id='${uniqueId}>
           ${value}
