@@ -2,7 +2,7 @@ import bot from "./assets/bot.svg";
 import user from "./assets/user.svg";
 
 const form = document.querySelector("form");
-const chatContainer = document.querySelector(".chat-container");
+const chatContainer = document.querySelector("#chat-container");
 
 let loadInterval;
 
@@ -24,7 +24,7 @@ function typeText(element, text) {
 
   let interval = setInterval(() => {
     if (index < text.length) {
-      element.innerHTML += text.chartAt(index);
+      element.innerHTML += text.charAt(index);
       index++;
     } else {
       clearInterval(interval);
@@ -49,9 +49,7 @@ function chatStrip(isAi, value, uniqueId) {
         <div class="profile">
           <img src=${isAi ? bot : user} alt=${isAi ? "bot" : "user"} />
         </div>
-        <div class="message" id=${uniqueId}>
-          ${value}
-        </div>
+        <div class="message" id=${uniqueId}>${value}</div>
       </div>
     </div>
     `;
@@ -68,6 +66,7 @@ const handleSubmit = async (e) => {
 
   //for ai chatstripe
   const uniqueId = generateUniqueId();
+
   chatContainer.innerHTML += chatStrip(true, "", uniqueId);
 
   //to scroll down the screen automatically to be able to see the message.
@@ -75,6 +74,31 @@ const handleSubmit = async (e) => {
 
   const messageDiv = document.getElementById(uniqueId);
   loader(messageDiv);
+
+  //fetch data from server to get bot response
+  const response = await fetch("http://localhost:5000", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      prompt: data.get("prompt"),
+    }),
+  });
+
+  clearInterval(loadInterval);
+  messageDiv.innerHTML = "";
+
+  if (response.ok) {
+    const data = await response.json();
+    const parseData = data.bot.trim();
+
+    typeText(messageDiv, parseData);
+  } else {
+    const err = await response.text();
+    messageDiv.innerHTML = "Something went wrong";
+    alert(err);
+  }
 };
 
 //when the from is submit
@@ -85,3 +109,15 @@ form.addEventListener("keyup", (e) => {
     handleSubmit(e);
   }
 });
+
+//to auto focus bot message
+if (chatContainer) {
+  chatContainer.addEventListener(
+    "DOMNodeInserted",
+    (event) => {
+      const { currentTarget: target } = event;
+      target.scroll({ top: target.scrollHeight, behavior: "smooth" });
+    },
+    true
+  );
+}
